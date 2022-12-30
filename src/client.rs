@@ -6,6 +6,7 @@ use prost_types::Any;
 use tonic::{transport::Channel as TonicChannel, Request};
 
 use crate::dapr::*;
+// use crate::dapr::dapr::proto::runtime::v1::{QueryStateResponse, QueryStateRequest};
 use crate::error::Error;
 
 pub struct Client<T>(T);
@@ -266,6 +267,7 @@ pub trait DaprInterface: Sized {
     async fn get_secret(&mut self, request: GetSecretRequest) -> Result<GetSecretResponse, Error>;
     async fn get_state(&mut self, request: GetStateRequest) -> Result<GetStateResponse, Error>;
     async fn save_state(&mut self, request: SaveStateRequest) -> Result<(), Error>;
+    async fn query_state(&mut self, request: QueryStateRequest) -> Result<QueryStateResponse, Error>;
     async fn delete_state(&mut self, request: DeleteStateRequest) -> Result<(), Error>;
     async fn delete_bulk_state(&mut self, request: DeleteBulkStateRequest) -> Result<(), Error>;
     async fn set_metadata(&mut self, request: SetMetadataRequest) -> Result<(), Error>;
@@ -313,6 +315,10 @@ impl DaprInterface for dapr_v1::dapr_client::DaprClient<TonicChannel> {
         Ok(self.get_state(Request::new(request)).await?.into_inner())
     }
 
+    async fn query_state(&mut self, request: QueryStateRequest)-> Result<QueryStateResponse, Error> {
+        Ok(self.query_state_alpha1(Request::new(request)).await?.into_inner())
+    }
+
     async fn save_state(&mut self, request: SaveStateRequest) -> Result<(), Error> {
         Ok(self.save_state(Request::new(request)).await?.into_inner())
     }
@@ -357,6 +363,10 @@ pub type GetStateRequest = dapr_v1::GetStateRequest;
 
 /// A response from getting state
 pub type GetStateResponse = dapr_v1::GetStateResponse;
+
+pub type QueryStateRequest = dapr_v1::QueryStateRequest;
+
+pub type QueryStateResponse = dapr_v1::QueryStateResponse;
 
 /// A request for saving state
 pub type SaveStateRequest = dapr_v1::SaveStateRequest;
