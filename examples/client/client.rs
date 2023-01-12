@@ -5,8 +5,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     std::thread::sleep(std::time::Duration::new(2, 0));
 
     // Get the Dapr port and create a connection
-    let port: u16 = std::env::var("DAPR_GRPC_PORT")?.parse()?;
-    let addr = format!("https://127.0.0.1:{}", port);
+    // let port: u16 = std::env::var("DAPR_GRPC_PORT")?.parse()?;
+    let addr = format!("https://127.0.0.1:{}", 61505);
 
     // Create the client
     let mut client = dapr::Client::<dapr::client::TonicClient>::connect(addr).await?;

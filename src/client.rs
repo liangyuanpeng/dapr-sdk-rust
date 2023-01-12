@@ -6,6 +6,7 @@ use prost_types::Any;
 use tonic::{transport::Channel as TonicChannel, Request};
 
 use crate::dapr::*;
+use crate::dapr::dapr::proto::runtime::v1::GetConfigurationRequest;
 use crate::error::Error;
 
 pub struct Client<T>(T);
@@ -157,6 +158,31 @@ impl<T: DaprInterface> Client<T> {
             .await
     }
 
+    pub async fn get_configuration<S>(
+        &mut self,
+        store_name: S,
+        key: Vec<String>,
+        metadata: Option<HashMap<String, String>>,
+    ) -> Result<GetConfigurationResponse, Error>
+    //TODO 返回Map<String, ConfigurationItem>
+    where
+        S: Into<String>,
+    {
+        let mut mdata = HashMap::<String, String>::new();
+        if let Some(m) = metadata {
+            mdata = m;
+        }
+
+        self.0
+            .get_configuration(GetConfigurationRequest {
+                store_name: store_name.into(),
+                keys: key,
+                metadata: mdata,
+                ..Default::default()
+            })
+            .await
+    }
+
     /// Save an array of state objects.
     ///
     /// # Arguments
@@ -270,6 +296,7 @@ pub trait DaprInterface: Sized {
     async fn delete_bulk_state(&mut self, request: DeleteBulkStateRequest) -> Result<(), Error>;
     async fn set_metadata(&mut self, request: SetMetadataRequest) -> Result<(), Error>;
     async fn get_metadata(&mut self) -> Result<GetMetadataResponse, Error>;
+    async fn get_configuration(&mut self,request: GetConfigurationRequest) -> Result<GetConfigurationResponse, Error>;
 }
 
 #[async_trait]
@@ -311,6 +338,10 @@ impl DaprInterface for dapr_v1::dapr_client::DaprClient<TonicChannel> {
 
     async fn get_state(&mut self, request: GetStateRequest) -> Result<GetStateResponse, Error> {
         Ok(self.get_state(Request::new(request)).await?.into_inner())
+    }
+
+    async fn get_configuration(&mut self, request: GetConfigurationRequest) -> Result<GetConfigurationResponse, Error> {
+        Ok(self.get_configuration_alpha1(Request::new(request)).await?.into_inner())
     }
 
     async fn save_state(&mut self, request: SaveStateRequest) -> Result<(), Error> {
@@ -375,6 +406,8 @@ pub type GetSecretResponse = dapr_v1::GetSecretResponse;
 
 /// A response from getting metadata
 pub type GetMetadataResponse = dapr_v1::GetMetadataResponse;
+
+pub type GetConfigurationResponse = dapr_v1::GetConfigurationResponse;
 
 /// A request for setting metadata
 pub type SetMetadataRequest = dapr_v1::SetMetadataRequest;
